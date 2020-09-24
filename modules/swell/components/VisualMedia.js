@@ -3,10 +3,11 @@ import get from 'lodash/get'
 // Add transformation parameters to image file URL
 // for creating responsive images with srcset (For images on Swell CDN only)
 
-const generateResponsiveImageData = (url, options) => {
-  if (!url) return {}
+const generateResponsiveImageData = (imageUrl, options) => {
+  if (!imageUrl) return {}
 
   const { widths, format, quality } = options
+  const host = 'https://965757062485e25e319b.ucr.io'
   let dpr = 1
   let q = quality
   const fm = format || 'jpg'
@@ -17,14 +18,13 @@ const generateResponsiveImageData = (url, options) => {
     q = Math.round(q) // TODO lower value for higher pixel density screens - not needed with uploadcare
   }
 
-  const srcsetArray = widths.map(size => {
-    const width = size // disabled tbd: Math.round(size * dpr)
-    const sizeUrl = `${url}?width=${width}&fm=${fm}&q=${q}`
-    return `${sizeUrl} ${width}w`
+  const srcsetArray = widths.map(width => {
+    const transforms = `/-/resize/${width}x/-/quality/lighter/-/format/auto/`
+    return host + transforms + imageUrl + ` ${width}w`
   })
 
   return {
-    src: `${url}?width=${srcWidth}&fm=${fm}&q=${q}`,
+    src: host + '/-/resize/1000x/-/quality/lighter/' + imageUrl,
     srcset: srcsetArray.join()
   }
 }
@@ -97,33 +97,25 @@ export default {
 
     // Set image object
     const image = {
-      src: source,
-      srcset: '',
-      sizes,
+      // src: source,
+      // srcset: '',
+      // sizes,
       alt
     }
 
     if (source && typeof source === 'object') {
       const file = get(source, 'file', source)
-      const imageData = generateResponsiveImageData(file.url, {
-        widths,
-        quality
-      })
-      image.src = imageData.src
-      image.srcset = imageData.srcset
-      image.width = file.width
-      image.height = file.height
+      image['data-blink-src'] = file.url
+      // image.src = imageData.src
+      // image.srcset = imageData.srcset
+      // image.width = file.width
+      // image.height = file.height
     }
 
     // Merge passed class string with staticClass from context
     const mergeClasses = classes => {
       const contextClasses = context.data.staticClass
       return contextClasses ? `${classes} ${contextClasses}` : classes
-    }
-
-    // Set lazy-load attributes
-    if (lazyLoad) {
-      image.loading = 'lazy'
     }
 
     const wrapperClass = isBackground
@@ -136,7 +128,12 @@ export default {
 
     return (
       <div class={wrapperClass} style={isBackground ? null : `padding-bottom: ${ratioPadding}`}>
-        <img {...{ attrs: image }} style="object-fit: cover;" class={imgClass} />
+        <img
+          {...{ attrs: image }}
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+          style="object-fit: cover;"
+          class={imgClass}
+        />
       </div>
     )
   }
