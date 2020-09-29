@@ -1,34 +1,5 @@
 import get from 'lodash/get'
 
-// Add transformation parameters to image file URL
-// for creating responsive images with srcset (For images on Swell CDN only)
-
-const generateResponsiveImageData = (imageUrl, options) => {
-  if (!imageUrl) return {}
-
-  const { widths, format, quality } = options
-  const host = 'https://965757062485e25e319b.ucr.io'
-  let dpr = 1
-  let q = quality
-  const fm = format || 'jpg'
-  const srcWidth = 1000
-
-  if (process.client) {
-    dpr = window.devicePixelRatio
-    q = Math.round(q) // TODO lower value for higher pixel density screens - not needed with uploadcare
-  }
-
-  const srcsetArray = widths.map(width => {
-    const transforms = `/-/resize/${width}x/-/quality/lighter/-/format/auto/`
-    return host + transforms + imageUrl + ` ${width}w`
-  })
-
-  return {
-    src: host + '/-/resize/1000x/-/quality/lighter/' + imageUrl,
-    srcset: srcsetArray.join()
-  }
-}
-
 export default {
   name: 'VisualMedia',
   functional: true,
@@ -36,9 +7,8 @@ export default {
   props: {
     // Media object returned by the API, or URL of the file
     source: {
-      type: [Object, String],
-      default:
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+      type: [Object],
+      default: null
     },
     // Alternative text for screen readers
     alt: {
@@ -50,17 +20,6 @@ export default {
       type: String,
       default: '1:1'
     },
-    // Visual quality level expressed as a percentage (0–100)
-    // Higher value = less compression, better quality, larger file size
-    quality: {
-      type: Number,
-      default: 80
-    },
-    // Image widths to generate source urls for
-    widths: {
-      type: Array,
-      default: () => [375, 640, 750, 1080, 1440, 2048, 2560, 3000, 3840]
-    },
     // Media conditions that determine how wide the image will be displayed
     sizes: {
       type: String,
@@ -71,45 +30,28 @@ export default {
     isBackground: {
       type: Boolean,
       default: false
-    },
-    // Determines if media should be lazy-loaded
-    lazyLoad: {
-      type: Boolean,
-      default: true
     }
   },
 
   render(h, context) {
-    const {
-      source,
-      alt,
-      aspectRatio,
-      quality,
-      widths,
-      sizes,
-      isBackground,
-      lazyLoad,
-      browserCanLazyLoad
-    } = context.props
-
+    const { source, alt, aspectRatio, sizes, isBackground } = context.props
     const [x, y] = aspectRatio.split(':')
     const ratioPadding = `${(y / x) * 100}%`
 
     // Set image object
     const image = {
-      // src: source,
-      // srcset: '',
-      // sizes,
+      sizes,
       alt
     }
 
     if (source && typeof source === 'object') {
       const file = get(source, 'file', source)
       image['data-blink-src'] = file.url
-      // image.src = imageData.src
-      // image.srcset = imageData.srcset
-      // image.width = file.width
-      // image.height = file.height
+    }
+
+    if (!isBackground) {
+      // TODO resolve aspect ratio crop issue with UC
+      // image['data-blink-ops'] = `scale-crop: ${x * 1000}x${y * 1000}; scale-crop-position: center;`
     }
 
     // Merge passed class string with staticClass from context
