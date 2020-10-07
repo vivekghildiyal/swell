@@ -16,6 +16,9 @@ export default function(moduleOptions) {
     fileName: 'swell-mixin.js',
     options
   })
+
+  // Add media loader
+  this.options.plugins.push(path.resolve(__dirname, './media-loader.client.js'))
 }
 
 // Required for Nuxt to avoid double imports

@@ -76,20 +76,7 @@ export default {
 
   head() {
     return {
-      __dangerouslyDisableSanitizersByTagID: {
-        'uc-delivery': ['innerHTML']
-      },
       script: [
-        {
-          vmid: 'uc-delivery',
-          type: 'text/javascript',
-          innerHTML: `(function(src, cb) {
-  var s = document.createElement('script'); s.setAttribute('src', src);
-  s.onload = cb; (document.head || document.body).appendChild(s);
-})('https://ucarecdn.com/libs/blinkloader/3.x/blinkloader.min.js', function() {
-  window.Blinkloader.optimize({ pubkey: '965757062485e25e319b', fadeIn: true });
-})`
-        },
         // Iconify API script for loading SVG icons on demand
         {
           type: 'text/javascript',
