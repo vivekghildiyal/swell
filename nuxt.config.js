@@ -111,6 +111,8 @@ export default {
       }
     ],
 
+    ['~/modules/swell-analytics', {}],
+
     [
       '~/modules/swell',
       /*

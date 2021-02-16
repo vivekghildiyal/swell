@@ -1,57 +1,23 @@
 import Vue from 'vue'
 
-export default async (ctx, inject) => {
-  const options = <%= serialize(options) %>
+export default async (context, inject) => {
+  // Access Swell context (not needed when consolidated)
+  const { $swell, app } = context
 
-  let ga
-  let fbq
-  let sgm
+  const storeSetting = await $swell.settings.get('store', {})
 
-  // Google Analytics module
-  if (options.googleAnalytics && options.googleAnalytics.id) {
-    const { GA } = await import('./swell-analytics-ga')
-    ga = new GA(options.googleAnalytics)
-  }
+  // TODO: Get proper tracking ID i.e.(integrations.ga.id), for now use currently exposed FB Pixel ID
+  const { facebookPixelId } = storeSetting
 
-  // Facebook Pixel module
-  if (options.facebookPixel && options.facebookPixel.id) {
-    const { FBQ } = await import('./swell-analytics-pixel')
-    fbq = new FBQ(options.facebookPixel)
-  }
+  if (facebookPixelId) {
+    const VueGtag = await import('vue-gtag')
 
-  // Segment module
-  if (options.segment && options.segment.id) {
-    const { SGM } = await import('./swell-analytics-segment')
-    sgm = new SGM(options.segment)
-  }
-
-  const swellAnalytics = new Vue({
-    data() {
-      return {
-        ga: ga,
-        fbq: fbq,
-        sgm: sgm
-      }
-    },
-    methods: {
-      enable() {
-        if (this.ga) this.ga.enable()
-        if (this.fbq) this.fbq.enable()
-        if (this.sgm) this.sgm.enable()
+    Vue.use(
+      VueGtag,
+      {
+        config: { id: facebookPixelId }
       },
-      trackPage(path) {
-        if (this.ga) this.ga.track('pageview', path)
-        if (this.fbq) this.fbq.track('PageView')
-        if (this.sgm) this.sgm.query('page')
-      },
-      disable() {
-        if (this.ga) this.ga.disable()
-        if (this.fbq) this.fbq.disable()
-        if (this.sgm) this.sgm.disable()
-      }
-    }
-  })
-
-  ctx.$swellAnalytics = swellAnalytics
-  inject('swellAnalytics', swellAnalytics)
+      app.router
+    )
+  }
 }
